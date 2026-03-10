@@ -2,15 +2,21 @@ package sanchez.santiago.composepokedex_sanchezsantiago.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
@@ -72,11 +78,61 @@ fun PokemonCard(name: String, weight: Float, height: Float, description: String,
 }
 
 @Composable
-fun PokemonDetailScreen(pokemon: Pokemon, modifier: Modifier = Modifier) {
-    Column(Modifier.background(ElectricYellow, RectangleShape)){
-        PokemonHeader(pokemon.name, pokemon.number, pokemon.fav)
-        PokemonCard(pokemon.name, pokemon.weight, pokemon.height,
-            pokemon.description, pokemon.ability, pokemon.type,pokemon.imagen)
+fun PokemonDetailScreen(
+    pokemon: Pokemon,
+    navPrevNext: Pair<Pokemon?, Pokemon?>, // Tupla de anterior y siguiente
+    onNavigate: (Int) -> Unit, // Acción de navegación
+    modifier: Modifier = Modifier
+) {
+    val (prev, next) = navPrevNext
+
+    LazyColumn(
+        Modifier
+            .fillMaxSize()
+            .background(ElectricYellow, RectangleShape)
+    ) {
+        item {
+            PokemonHeader(pokemon.name, pokemon.number, pokemon.fav)
+
+            // Sección de Navegación Anterior/Siguiente
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                prev?.let {
+                    Text("< ${it.name}", Modifier.clickable { onNavigate(it.number) })
+                }
+                next?.let {
+                    Text("${it.name} >", Modifier.clickable { onNavigate(it.number) })
+                }
+            }
+
+            PokemonCard(
+                pokemon.name, pokemon.weight, pokemon.height,
+                pokemon.description, pokemon.ability, pokemon.type, pokemon.imagen
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+            Text("Evoluciones", Modifier.padding(16.dp))
+        }
+
+        // LazyColumn para evoluciones (dentro de la misma LazyColumn principal usando items)
+        items(pokemon.evolutions) { evolution ->
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .clickable { onNavigate(evolution.number) },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(evolution.imagen),
+                    contentDescription = null,
+                    modifier = Modifier.size(60.dp)
+                )
+                Text(text = evolution.name, modifier = Modifier.padding(start = 16.dp))
+            }
+        }
     }
 }
 
@@ -84,8 +140,22 @@ fun PokemonDetailScreen(pokemon: Pokemon, modifier: Modifier = Modifier) {
 @Composable
 fun PokemonDetailScreenPreview() {
     ComposePokedex_sanchezsantiagoTheme {
-        PokemonDetailScreen(Pokemon(name = "Pikachu", number = 25, type = "Eléctrico",
-            description = "asdgasdgasdgasdfasdfasdfasdfasdf.", height = 0.4f, weight = 6f, fav = true,
-            ability = "Estática", imagen = R.drawable.pikachu))
+        PokemonDetailScreen(
+            pokemon = Pokemon(
+                name = "Pikachu",
+                number = 25,
+                type = "Eléctrico",
+                description = "Pikachu que almacena energía eléctrica en sus mejillas para liberarla en combate.",
+                height = 0.4f,
+                weight = 6f,
+                fav = true,
+                ability = "Estática",
+                imagen = R.drawable.pikachu,
+                evolutions = emptyList()
+            ),
+            navPrevNext = Pair(null, null),
+            onNavigate = {},
+            modifier = Modifier
+        )
     }
 }

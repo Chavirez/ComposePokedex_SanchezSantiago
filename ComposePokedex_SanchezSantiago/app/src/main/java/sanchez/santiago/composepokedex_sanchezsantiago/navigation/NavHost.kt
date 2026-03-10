@@ -8,20 +8,43 @@ import androidx.navigation.toRoute
 import sanchez.santiago.composepokedex_sanchezsantiago.dummies.getOnePokemon
 import sanchez.santiago.composepokedex_sanchezsantiago.dummies.getPokemon
 import sanchez.santiago.composepokedex_sanchezsantiago.dummies.showAllPokemons
+import sanchez.santiago.composepokedex_sanchezsantiago.screens.LoginScreen
 import sanchez.santiago.composepokedex_sanchezsantiago.screens.PokedexMenuScreen
 import sanchez.santiago.composepokedex_sanchezsantiago.screens.PokemonDetailScreen
+import sanchez.santiago.composepokedex_sanchezsantiago.screens.RegisterScreen
 
 @Composable
 fun MyApp(){
-
     val navController = rememberNavController()
-    NavHost(navController, startDestination = PokemonList){
-        composable<PokemonList>{ PokedexMenuScreen(showAllPokemons(),
-            {id-> navController.navigate(route = PokemonDetail(id = id))}) }
-        composable<PokemonDetail>{ backStackEntry ->
-            val pokemon: PokemonDetail = backStackEntry.toRoute()
-            PokemonDetailScreen(getPokemon(pokemon.id))
+    // Login como startDestination
+    NavHost(navController, startDestination = Login) {
+        composable<Login> {
+            LoginScreen(
+                onLoginSuccess = { navController.navigate(PokemonList) },
+                onGoToRegister = { navController.navigate(Register) }
+            )
+        }
+        composable<Register> {
+            RegisterScreen(onRegisterSuccess = { navController.navigate(Login) })
+        }
+        composable<PokemonList> {
+            PokedexMenuScreen(showAllPokemons()) { id ->
+                navController.navigate(PokemonDetail(id = id))
+            }
+        }
+        composable<PokemonDetail> { backStackEntry ->
+            val routeData: PokemonDetail = backStackEntry.toRoute()
+            val currentPokemon = getPokemon(routeData.id)
+
+            // Ejemplo de lógica para obtener anterior y siguiente
+            val prev = if (routeData.id > 1) getPokemon(routeData.id - 1) else null
+            val next = getPokemon(routeData.id + 1) // Asumiendo que existe el siguiente
+
+            PokemonDetailScreen(
+                pokemon = currentPokemon,
+                navPrevNext = Pair(prev, next),
+                onNavigate = { id -> navController.navigate(PokemonDetail(id = id)) }
+            )
         }
     }
-
 }
